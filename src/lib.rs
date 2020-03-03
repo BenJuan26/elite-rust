@@ -7,6 +7,7 @@ use std::io;
 use std::io::BufRead;
 use std::error::Error;
 use regex::Regex;
+use serde::{Serialize, Deserialize};
 
 lazy_static! {
     static ref JOURNAL_FILE_REGEX: Regex = Regex::new(r"^Journal\.\d{12}\.\d{2}\.log$").unwrap();
@@ -15,7 +16,7 @@ lazy_static! {
 
 pub fn get_star_system_from_path(path: &path::Path) -> Result<String, Box<dyn Error>> {
     let files = fs::read_dir(path)?;
-    let mut found = true;
+    let mut found = false;
     let mut system = String::new();
 
     for entry in files {
@@ -36,9 +37,9 @@ pub fn get_star_system_from_path(path: &path::Path) -> Result<String, Box<dyn Er
 
         for line in lines {
             if let Ok(line) = line {
-                let parsed = json::parse(line.as_str())?;
-                if parsed["event"] == "FSDJump" || parsed["event"] == "Location" {
-                    if let Some(system_option) = parsed["StarSystem"].as_str() {
+                let event = json::parse(line.as_str())?;
+                if event["event"] == "FSDJump" || event["event"] == "Location" {
+                    if let Some(system_option) = event["StarSystem"].as_str() {
                         system = String::from(system_option);
                         found = true;
                     }
@@ -59,4 +60,54 @@ pub fn get_star_system() -> Result<String, Box<dyn Error>> {
     log_dir.push(r"Saved Games/Frontier Developments/Elite Dangerous");
 
     get_star_system_from_path(log_dir.as_path())
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Fuel {
+    #[serde(rename = "FuelMain")]
+    pub fuel_main: f64,
+    #[serde(rename = "FuelReservoir")]
+    pub fuel_reservoir: f64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Status {
+    pub timestamp: String,
+    pub event: String,
+    #[serde(rename = "Flags")]
+    pub raw_flags: u32,
+    #[serde(rename = "Pips")]
+    pub pips: [i32; 3],
+    #[serde(rename = "FireGroup")]
+    pub fire_group: i32,
+    #[serde(rename = "GuiFocus")]
+    pub gui_focus: i32,
+    #[serde(rename = "Fuel")]
+    pub fuel: Fuel,
+    #[serde(rename = "Cargo")]
+    pub cargo: f64,
+    #[serde(rename = "Latitude")]
+    pub latitude: Option<f64>,
+    #[serde(rename = "Longitude")]
+    pub longitude: Option<f64>,
+    #[serde(rename = "Heading")]
+    pub heading: Option<i32>,
+    #[serde(rename = "Altitude")]
+    pub altitude: Option<i32>,
+}
+
+pub fn get_status_from_path(path: &path::Path) -> Result<Status, Box<dyn Error>> {
+    let mut path_buf = path.to_path_buf();
+    path_buf.push("Status.json");
+
+    let contents = fs::read_to_string(path_buf.to_str().ok_or("Couldn't convert PathBuf to str")?)?;
+    let status: Status = serde_json::from_str(contents.as_str())?;
+
+    Ok(status)
+}
+
+pub fn get_status() -> Result<Status, Box<dyn Error>> {
+    let status = get_status_from_path(HOME_DIR.as_path())?;
+
+    Ok(status)
 }

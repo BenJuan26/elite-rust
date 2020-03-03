@@ -1,1 +1,1 @@
-{"timestamp":"2017-12-07T10:31:37Z", "event":"Status", "Flags":553713677, "Pips":[2,8,2], "FireGroup":0, "GuiFocus":5}
+{ "timestamp":"2020-03-03T05:03:21Z", "event":"Status", "Flags":18939917, "Pips":[2,8,2], "FireGroup":0, "GuiFocus":0, "Fuel":{ "FuelMain":32.000000, "FuelReservoir":1.130000 }, "Cargo":0.000000, "LegalState":"Clean", "Latitude":51.640839, "Longitude":96.658104, "Heading":0, "Altitude":0 }
