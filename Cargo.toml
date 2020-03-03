@@ -1,5 +1,5 @@
 [package]
-name = "elite-rust"
+name = "elite"
 version = "0.1.0"
 authors = ["Benjamin Schubert <bschubert@ca.ibm.com>"]
 edition = "2018"
