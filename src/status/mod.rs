@@ -5,6 +5,8 @@ use serde::{Serialize, Deserialize};
 
 use super::HOME_DIR;
 
+pub mod flags;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Fuel {
     #[serde(rename = "FuelMain")]
@@ -19,6 +21,9 @@ pub struct Status {
     pub timestamp: String,
 
     pub event: String,
+
+    #[serde(skip)]
+    pub flags: flags::Flags,
 
     #[serde(rename = "Flags")]
     pub raw_flags: u32,
@@ -51,12 +56,19 @@ pub struct Status {
     pub altitude: Option<i32>,
 }
 
+impl Status {
+    fn expand_flags(&mut self) {
+        self.flags = flags::Flags::from(self.raw_flags);
+    }
+}
+
 pub fn get_from_path(path: &path::Path) -> Result<Status, Box<dyn Error>> {
     let mut path_buf = path.to_path_buf();
     path_buf.push("Status.json");
 
     let contents = fs::read_to_string(path_buf.to_str().ok_or("Couldn't convert PathBuf to str")?)?;
-    let status: Status = serde_json::from_str(contents.as_str())?;
+    let mut status: Status = serde_json::from_str(contents.as_str())?;
+    status.expand_flags();
 
     Ok(status)
 }
